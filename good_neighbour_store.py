@@ -63,10 +63,21 @@ class BillingSystem(tk.Tk):
         search_cat = tk.Frame(self, bg="#f8fbfc")
         search_cat.pack(fill="x", pady=(10, 0), padx=20)
         self.search_var = tk.StringVar()
-        search_entry = tk.Entry(search_cat, textvariable=self.search_var, font=("Segoe UI", 14), width=28)
+        # Search entry with placeholder synced to StringVar
+        self.search_var.set("Search products...")
+        search_entry = tk.Entry(search_cat, textvariable=self.search_var, font=("Segoe UI", 14), width=28, fg="#666")
         search_entry.pack(side="left", padx=(0, 20))
-        search_entry.insert(0, "Search products...")
-        search_entry.bind("<FocusIn>", lambda e: search_entry.delete(0, "end") if search_entry.get() == "Search products..." else None)
+        # Clear placeholder on focus, restore on focus out if empty
+        def on_focus_in(e):
+            if self.search_var.get().lower() == "search products...":
+                self.search_var.set("")
+                search_entry.config(fg="#000")
+        def on_focus_out(e):
+            if not self.search_var.get().strip():
+                self.search_var.set("Search products...")
+                search_entry.config(fg="#666")
+        search_entry.bind("<FocusIn>", on_focus_in)
+        search_entry.bind("<FocusOut>", on_focus_out)
         search_entry.bind("<KeyRelease>", lambda e: self.refresh_products())
 
         # Category Buttons
