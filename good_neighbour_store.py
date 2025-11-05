@@ -148,10 +148,11 @@ class BillingSystem(tk.Tk):
             add_btn.pack(fill="x", pady=(10,0))
 
     def add_to_cart(self, product):
-        if product.name in self.cart:
-            self.cart[product.name].quantity += 1
+        # Use product object as the dict key to avoid name collisions
+        if product in self.cart:
+            self.cart[product].quantity += 1
         else:
-            self.cart[product.name] = CartItem(product, 1)
+            self.cart[product] = CartItem(product, 1)
         self.refresh_cart()
 
     def refresh_cart(self):
@@ -161,24 +162,26 @@ class BillingSystem(tk.Tk):
             self.cart_total_label.config(text="Your cart is empty.\nAdd items to get started.", fg="#aaa")
             return
         total = 0
-        for idx, item in enumerate(self.cart.values()):
+        # iterate key, item so remove can reference the exact product object
+        for idx, (key, item) in enumerate(list(self.cart.items())):
             row = tk.Frame(self.cart_items_frame, bg="white")
             row.pack(fill="x", pady=5, padx=7)
             tk.Label(row, text=f"{item.product.name}", font=("Segoe UI", 12), bg="white", width=15, anchor="w").pack(side="left")
             tk.Label(row, text=f"₹{item.product.discounted_price():.2f}", font=("Segoe UI", 12), bg="white", width=8).pack(side="left")
             tk.Label(row, text=f"x{item.quantity}", font=("Segoe UI", 12), bg="white", width=5).pack(side="left")
             tk.Label(row, text=f"₹{item.subtotal():.2f}", font=("Segoe UI", 12, "bold"), bg="white", width=8).pack(side="left")
-            # Remove button
+            # Remove button references the product object key
             tk.Button(row, text="−", font=("Segoe UI", 12, "bold"), bg="#e3f6fd", fg="#17a2b8", bd=0,
-                      command=lambda k=item.product.name: self.remove_from_cart(k)).pack(side="right", padx=5)
+                      command=lambda k=key: self.remove_from_cart(k)).pack(side="right", padx=5)
             total += item.subtotal()
         self.cart_total_label.config(text=f"Total: ₹{total:.2f}", fg="#17a2b8")
 
-    def remove_from_cart(self, name):
-        if name in self.cart:
-            self.cart[name].quantity -= 1
-            if self.cart[name].quantity <= 0:
-                del self.cart[name]
+    def remove_from_cart(self, key):
+        # key is the product object when using object keys
+        if key in self.cart:
+            self.cart[key].quantity -= 1
+            if self.cart[key].quantity <= 0:
+                del self.cart[key]
             self.refresh_cart()
 
     def checkout(self):
